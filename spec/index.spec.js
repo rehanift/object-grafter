@@ -6,10 +6,9 @@ var sinonChai = require("sinon-chai");
 chai.use(sinonChai);
 
 var load_object_grafter = function(context){
+  var object_grafter_source_loader = require("./../source_loader").create();
+  var grafter_src = object_grafter_source_loader.load_source();
   var vm = require("vm");
-  var fs = require("fs");
-
-  var grafter_src = fs.readFileSync(__dirname + "/../index.js", "utf-8");
   vm.runInContext(grafter_src, context);
   return vm.runInContext("ObjectGrafter.create()", context);
 };
@@ -102,6 +101,10 @@ describe("Object Grafter", function(){
       var grafted = this.grafter.graft(host_function);
       var return_value = grafted();
       expect(return_value.constructor).to.equal(this.client_builtin_objects["Date"]);
+    });
+
+    it("grafts thrown exceptions", function(){
+      
     });
   });
 
