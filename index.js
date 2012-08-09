@@ -105,11 +105,20 @@ ObjectGrafter.prototype.graft_function = function(object){
   var self = this;
   var apply = Function.prototype.call.bind(Function.prototype.apply);
   var client_object = function(){
-    var grafted_args = [];
+    var grafted_args = [],
+        return_value;
+
     for(var i=0; i< arguments.length; i++){
       grafted_args.push(self.graft(arguments[i]));
     }
-    var return_value = apply(object, this, grafted_args);
+    
+    try {
+      return_value = apply(object, this, grafted_args);
+    } catch(e){
+      var grafted_exception = self.graft(e);
+      throw grafted_exception;
+    }
+    
     return self.graft(return_value);
   };
 

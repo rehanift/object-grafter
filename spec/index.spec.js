@@ -121,7 +121,17 @@ describe("Object Grafter", function(){
       expect(grafted_ctor).to.equal(this.client_builtin_objects["Date"]);
     });
 
-    it("grafts thrown exceptions");
+    it("grafts thrown exceptions",function(){
+      var host_fn = function(){
+        throw new Error("Foo");
+      };
+      var grafted_host_fn = this.grafter.graft(host_fn);
+      try {
+        grafted_host_fn();
+      } catch(e) {
+        expect(e.constructor).to.equal(this.client_builtin_objects["Error"]);       
+      }
+    });
 
     it("grafts arguments", function(){
       var spy = sinon.spy();
@@ -139,7 +149,18 @@ describe("Object Grafter", function(){
       spy.should.have.been.calledWith(grafted_foo, grafted_bar);
     });
 
-    it("grafts callback arguments");
+    it("grafts callback arguments", function(){
+      var self = this;
+      var host_fn = function(cb){
+        var date = new Date();
+        cb(date);
+      };
+      var grafted_host_fn = this.grafter.graft(host_fn);
+      
+      grafted_host_fn(function(date){
+        expect(date.constructor).to.equal(self.client_builtin_objects["Date"]);
+      });
+    });
   });
 
   describe("Built-in Object Instances", function(){
