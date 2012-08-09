@@ -13,6 +13,15 @@ var load_object_grafter = function(context){
   return vm.runInContext("ObjectGrafter.create()", context);
 };
 
+var make_get_ctor_fn_from_client_context = function(context){
+  var vm = require("vm");
+  var get_constructor = function(object){
+    return object.constructor;
+  };
+
+  return vm.runInContext("("+get_constructor.toString()+")", context);
+};
+
 describe("Object Grafter", function(){
   beforeEach(function(){
     var vm = require("vm");
@@ -23,7 +32,10 @@ describe("Object Grafter", function(){
       "Error": vm.runInContext("Error", this.client_context),
       "RegExp": vm.runInContext("RegExp", this.client_context),
       "Object": vm.runInContext("Object", this.client_context),
-      "Function": vm.runInContext("Function", this.client_context)
+      "Function": vm.runInContext("Function", this.client_context),
+      "String": vm.runInContext("String", this.client_context),
+      "Boolean": vm.runInContext("Boolean", this.client_context),
+      "Number": vm.runInContext("Number", this.client_context)
     };
     this.grafter = load_object_grafter(this.client_context);
 
@@ -32,8 +44,11 @@ describe("Object Grafter", function(){
       "Date" : Date,
       "Error" : Error,
       "RegExp" : RegExp,
-      "Object" : Object
+      "Object" : Object,
+      "String" : String
     });
+
+    this.get_ctor_from_client_context = make_get_ctor_fn_from_client_context(this.client_context);
   });
   
   describe("Built-in Object Constructors", function(){
@@ -78,7 +93,9 @@ describe("Object Grafter", function(){
       var host_function = function(){};
 
       var grafted = this.grafter.graft(host_function);
-      expect(grafted.constructor).to.equal(this.client_builtin_objects["Function"]);
+      var grafted_ctor = this.get_ctor_from_client_context(grafted);
+
+      expect(grafted_ctor).to.equal(this.client_builtin_objects["Function"]);
     });
 
     it("calls the host function", function(){
@@ -100,12 +117,29 @@ describe("Object Grafter", function(){
 
       var grafted = this.grafter.graft(host_function);
       var return_value = grafted();
-      expect(return_value.constructor).to.equal(this.client_builtin_objects["Date"]);
+      var grafted_ctor = this.get_ctor_from_client_context(return_value);
+      expect(grafted_ctor).to.equal(this.client_builtin_objects["Date"]);
     });
 
-    it("grafts thrown exceptions", function(){
-      
+    it("grafts thrown exceptions");
+
+    it("grafts arguments", function(){
+      var spy = sinon.spy();
+      var host_fn = function(foo,bar){
+        spy(foo,bar);
+      };
+      var grafted_host_fn = this.grafter.graft(host_fn);
+      var foo = new Date();
+      var bar = new Object();
+      var grafted_foo = this.grafter.graft(foo);
+      var grafted_bar = this.grafter.graft(bar);
+
+      grafted_host_fn(foo,bar);
+
+      spy.should.have.been.calledWith(grafted_foo, grafted_bar);
     });
+
+    it("grafts callback arguments");
   });
 
   describe("Built-in Object Instances", function(){
@@ -113,13 +147,31 @@ describe("Object Grafter", function(){
     it("grafts a RegExp object", function(){
       var host_regexp = new RegExp(".*");
       var grafted = this.grafter.graft(host_regexp);
-      expect(grafted.constructor).to.equal(this.client_builtin_objects["RegExp"]);
+      var grafted_ctor = this.get_ctor_from_client_context(grafted);
+      expect(grafted_ctor).to.equal(this.client_builtin_objects["RegExp"]);
     });
 
-    it("grafts an Error object", function(){
-      var host_error_object = new Error();
-      var grafted = this.grafter.graft(host_error_object);
-      expect(grafted.constructor).to.equal(this.client_builtin_objects["Error"]);
+    describe("Errors", function(){
+      it("grafts an Error object", function(){
+        var host_error_object = new Error();
+        var grafted = this.grafter.graft(host_error_object);
+        var grafted_ctor = this.get_ctor_from_client_context(grafted);
+        expect(grafted_ctor).to.equal(this.client_builtin_objects["Error"]);
+      });
+
+      it("grafts an error objects stack", function(){
+        var host_error_object = new Error();
+        var grafted = this.grafter.graft(host_error_object);
+        var grafted_ctor = this.get_ctor_from_client_context(grafted.stack);
+        expect(grafted_ctor).to.equal(this.client_builtin_objects["String"]);
+      });
+
+      it("grafts an error objects name", function(){
+        var host_error_object = new Error();
+        var grafted = this.grafter.graft(host_error_object);
+        var grafted_ctor = this.get_ctor_from_client_context(grafted.name);
+        expect(grafted_ctor).to.equal(this.client_builtin_objects["String"]);
+      });
     });
 
     it("grafts an Object that inherits from another Object", function(){
@@ -130,15 +182,16 @@ describe("Object Grafter", function(){
       var host_child_object = new host_child_ctor();
       
       var grafted = this.grafter.graft(host_child_object);
-      expect(grafted.foo.constructor).to.equal(this.client_builtin_objects["Function"]);
-
+      var grafted_ctor = this.get_ctor_from_client_context(grafted.foo);
+      expect(grafted_ctor).to.equal(this.client_builtin_objects["Function"]);
     });
     
 
     it("grafts a Date object", function(){
       var host_date_object = new Date();
       var grafted = this.grafter.graft(host_date_object);
-      expect(grafted.constructor).to.equal(this.client_builtin_objects["Date"]);
+      var grafted_ctor = this.get_ctor_from_client_context(grafted);
+      expect(grafted_ctor).to.equal(this.client_builtin_objects["Date"]);
       expect(grafted.toString()).to.eql(host_date_object.toString());
     });
 
@@ -148,7 +201,9 @@ describe("Object Grafter", function(){
       host_array_object[1] = true;
       host_array_object[2] = 2;
       var grafted = this.grafter.graft(host_array_object);
-      expect(grafted.constructor).to.equal(this.client_builtin_objects["Array"]);
+      var grafted_ctor = this.get_ctor_from_client_context(grafted);
+
+      expect(grafted_ctor).to.equal(this.client_builtin_objects["Array"]);
       expect(grafted).to.eql(["foo",true,2]);
     });
 
@@ -157,9 +212,11 @@ describe("Object Grafter", function(){
       host_object.host_date = new Date();
       
       var grafted = this.grafter.graft(host_object);
+      var grafted_ctor = this.get_ctor_from_client_context(grafted);
+      var grafted_property_ctor = this.get_ctor_from_client_context(grafted.host_date);
 
-      expect(grafted.constructor).to.equal(this.client_builtin_objects["Object"]);
-      expect(grafted.host_date.constructor).to.equal(this.client_builtin_objects["Date"]);
+      expect(grafted_ctor).to.equal(this.client_builtin_objects["Object"]);
+      expect(grafted_property_ctor).to.equal(this.client_builtin_objects["Date"]);
     });
   });
 
@@ -167,19 +224,22 @@ describe("Object Grafter", function(){
     it("grafts a number", function(){
       var host_number = 2;
       var grafted = this.grafter.graft(host_number);
-      expect(grafted).to.eql(2);
+      var grafted_ctor = this.get_ctor_from_client_context(grafted);
+      expect(grafted_ctor).to.equal(this.client_builtin_objects["Number"]);
     });
 
     it("grafts a boolean", function(){
       var host_boolean = true;
       var grafted = this.grafter.graft(host_boolean);
-      expect(grafted).to.eql(true);
+      var grafted_ctor = this.get_ctor_from_client_context(grafted);
+      expect(grafted_ctor).to.equal(this.client_builtin_objects["Boolean"]);
     });
 
     it("grafts a string", function(){
       var host_string = "foo";
       var grafted = this.grafter.graft(host_string);
-      expect(grafted).to.eql("foo");
+      var grafted_ctor = this.get_ctor_from_client_context(grafted);
+      expect(grafted_ctor).to.equal(this.client_builtin_objects["String"]);
     });
 
     it("grafts undefined", function(){

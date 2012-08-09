@@ -105,7 +105,11 @@ ObjectGrafter.prototype.graft_function = function(object){
   var self = this;
   var apply = Function.prototype.call.bind(Function.prototype.apply);
   var client_object = function(){
-    var return_value = apply(object);
+    var grafted_args = [];
+    for(var i=0; i< arguments.length; i++){
+      grafted_args.push(self.graft(arguments[i]));
+    }
+    var return_value = apply(object, this, grafted_args);
     return self.graft(return_value);
   };
 
@@ -117,6 +121,7 @@ ObjectGrafter.prototype.graft_function = function(object){
 ObjectGrafter.prototype.graft_error_object = function(object){
   var client_object = new Error(object.message);
   this.graft_host_object_properties_to_client_object(object, client_object);
+  client_object.stack = this.graft(client_object.stack);
 
   return client_object;
 };
@@ -160,7 +165,8 @@ ObjectGrafter.prototype.graft = function(o){
   }
 
   if(typeof(o) == "string"){
-    return this.graft_builtin_type(o);
+    return (new String(o)).toString();
+    //return this.graft_builtin_type(o);
   }
 
   if(typeof(o) == "undefined"){
