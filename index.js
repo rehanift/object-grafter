@@ -15,11 +15,22 @@ ObjectGrafter.prototype.graft_builtin_type = function(type){
   return JSON.parse(JSON.stringify(type));
 };
 
-ObjectGrafter.prototype.graft_host_object_properties_to_client_object = function(host_object, client_object){
+ObjectGrafter.prototype.graft_host_object_properties_to_client_object = function(host_object, client_object, safe_properties){
+  if(typeof(safe_properties) == 'undefined'){
+    safe_properties = [];
+  }
+  function is_safe_property(property){
+    if(safe_properties.indexOf(property) !== -1){
+      return true;
+    } else {
+      return false;
+    }
+  }
+  
   var self = this;
   var properties = Object.getOwnPropertyNames(host_object);
   properties.forEach(function(property){
-    if (property == "constructor") {
+    if (property == "constructor" || is_safe_property(property)) {
       client_object[property] = property;
     } else {
       client_object[property] = self.graft(host_object[property]);
@@ -123,7 +134,10 @@ ObjectGrafter.prototype.graft_function = function(object){
     return self.graft(return_value);
   };
 
-  this.graft_host_object_properties_to_client_object(object, client_object);
+  var safe_properties = ['constructor','name','arguments','caller',
+                         'callee', 'length'];
+
+  this.graft_host_object_properties_to_client_object(object, client_object, safe_properties);
 
   return client_object;
 };
