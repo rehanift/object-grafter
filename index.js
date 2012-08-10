@@ -31,7 +31,7 @@ ObjectGrafter.prototype.graft_host_object_properties_to_client_object = function
   var properties = Object.getOwnPropertyNames(host_object);
   properties.forEach(function(property){
     if (property == "constructor" || is_safe_property(property)) {
-      client_object[property] = property;
+      // do nothing
     } else {
       client_object[property] = self.graft(host_object[property]);
     }
@@ -93,11 +93,7 @@ ObjectGrafter.prototype.graft_objects_and_functions = function(object){
     return this.graft_error_object(object);
   } else {
     return this.graft_object(object);
-    client_object = {};
-
   }
-
-  return this.graft_host_object_properties_to_client_object(object, client_object);
 };
 
 ObjectGrafter.prototype.graft_object = function(host_object){
@@ -144,8 +140,8 @@ ObjectGrafter.prototype.graft_function = function(object){
 
 ObjectGrafter.prototype.graft_error_object = function(object){
   var client_object = new Error(object.message);
-  this.graft_host_object_properties_to_client_object(object, client_object);
-  client_object.stack = this.graft(client_object.stack);
+  var safe_properties = ['constructor','length'];
+  this.graft_host_object_properties_to_client_object(object, client_object, safe_properties);
 
   return client_object;
 };
@@ -162,6 +158,7 @@ ObjectGrafter.prototype.graft_regexp_object = function(object){
     options += 'i';
   }
   var client_object = new RegExp(object.source, options);
+  var safe_properties = ['length','constructor'];
   this.graft_host_object_properties_to_client_object(object, client_object);
 
   return client_object;
@@ -169,14 +166,16 @@ ObjectGrafter.prototype.graft_regexp_object = function(object){
 
 ObjectGrafter.prototype.graft_date_object = function(object){
   var client_object = new Date(object);
-  this.graft_host_object_properties_to_client_object(object, client_object);
+  var safe_properties = ['constructor','length'];
+  this.graft_host_object_properties_to_client_object(object, client_object, safe_properties);
 
   return client_object;
 };
 
 ObjectGrafter.prototype.graft_array_object = function(object){
   var client_object = new Array(object.length);
-  this.graft_host_object_properties_to_client_object(object, client_object);
+  var safe_properties = ['constructor','length'];
+  this.graft_host_object_properties_to_client_object(object, client_object, safe_properties);
 
   return client_object;
 };

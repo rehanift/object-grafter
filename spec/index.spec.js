@@ -233,17 +233,26 @@ describe("Object Grafter", function(){
       expect(grafted.toString()).to.eql(host_date_object.toString());
     });
 
-    it("grafts an Array object", function(){
-      var host_array_object = new Array(3);
-      host_array_object[0] = "foo";
-      host_array_object[1] = true;
-      host_array_object[2] = 2;
-      var grafted = this.grafter.graft(host_array_object);
-      var grafted_ctor = this.get_ctor_from_client_context(grafted);
+    describe("Array", function(){
+      beforeEach(function(){
+        this.host_array_object = new Array(3);
+        this.host_array_object[0] = "foo";
+        this.host_array_object[1] = true;
+        this.host_array_object[2] = 2;
+        this.grafted = this.grafter.graft(this.host_array_object);
+      });
 
-      expect(grafted_ctor).to.equal(this.client_builtin_objects["Array"]);
-      expect(grafted).to.eql(["foo",true,2]);
+      it("grafts an Array object to the client Array constructor", function(){
+        var grafted_ctor = this.get_ctor_from_client_context(this.grafted);
+        expect(grafted_ctor).to.equal(this.client_builtin_objects["Array"]);
+      });
+
+      it("copies an equivalent array", function(){
+        expect(this.grafted).to.eql(["foo",true,2]);
+      });
     });
+
+
 
     it("grafts generic objects", function(){
       var host_object = new Object();
