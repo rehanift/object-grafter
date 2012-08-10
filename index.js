@@ -137,7 +137,17 @@ ObjectGrafter.prototype.graft_error_object = function(object){
 };
 
 ObjectGrafter.prototype.graft_regexp_object = function(object){
-  var client_object = new RegExp(object.source);
+  var options = '';
+  if (object.multiline) {
+    options += 'm';
+  }
+  if (object.global) {
+    options += 'g';
+  }
+  if (object.ignoreCase) {
+    options += 'i';
+  }
+  var client_object = new RegExp(object.source, options);
   this.graft_host_object_properties_to_client_object(object, client_object);
 
   return client_object;

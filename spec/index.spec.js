@@ -165,12 +165,29 @@ describe("Object Grafter", function(){
 
   describe("Built-in Object Instances", function(){
 
-    it("grafts a RegExp object", function(){
-      var host_regexp = new RegExp(".*");
-      var grafted = this.grafter.graft(host_regexp);
-      var grafted_ctor = this.get_ctor_from_client_context(grafted);
-      expect(grafted_ctor).to.equal(this.client_builtin_objects["RegExp"]);
+    describe("RegExp", function(){
+      beforeEach(function(){
+        this.host_regexp = new RegExp(".*", 'mgi');
+        this.grafted = this.grafter.graft(this.host_regexp);
+      });
+      
+      it("grafts a RegExp object to the client context's RegExp constructor", function(){
+        var grafted_ctor = this.get_ctor_from_client_context(this.grafted);
+        expect(grafted_ctor).to.equal(this.client_builtin_objects["RegExp"]);
+      });
+
+      it("preserves the host RegExp object's source", function(){
+        expect(this.grafted.source).to.eql(this.host_regexp.source);
+      });
+
+      it("preserves the host RegExp object's options", function(){
+        expect(this.grafted.multiline).to.eql(this.host_regexp.multiline);
+        expect(this.grafted.global).to.eql(this.host_regexp.global);
+        expect(this.grafted.ignoreCase).to.eql(this.host_regexp.ignoreCase);
+      });
     });
+
+
 
     describe("Errors", function(){
       it("grafts an Error object", function(){
