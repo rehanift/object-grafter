@@ -105,6 +105,7 @@ ObjectGrafter.prototype.graft_function = function(object){
   var self = this;
   var apply = Function.prototype.call.bind(Function.prototype.apply);
   var client_object = function(){
+    "use strict";
     var grafted_args = [],
         return_value;
 
