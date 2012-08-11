@@ -22,7 +22,7 @@ var make_get_ctor_fn_from_client_context = function(context){
   return vm.runInContext("("+get_constructor.toString()+")", context);
 };
 
-describe("Object Grafter", function(){
+describe("An Object Grafter", function(){
   beforeEach(function(){
     var vm = require("vm");
     this.client_context = vm.createContext();
@@ -211,18 +211,6 @@ describe("Object Grafter", function(){
         expect(grafted_ctor).to.equal(this.client_builtin_objects["String"]);
       });
     });
-
-    it("grafts an Object that inherits from another Object", function(){
-      var host_parent_ctor = function(){ };
-      host_parent_ctor.prototype.foo = function(){ return "foo"; };
-      var host_child_ctor = function(){ };
-      host_child_ctor.prototype = new host_parent_ctor();
-      var host_child_object = new host_child_ctor();
-      
-      var grafted = this.grafter.graft(host_child_object);
-      var grafted_ctor = this.get_ctor_from_client_context(grafted.foo);
-      expect(grafted_ctor).to.equal(this.client_builtin_objects["Function"]);
-    });
     
 
     it("grafts a Date object", function(){
@@ -252,19 +240,34 @@ describe("Object Grafter", function(){
       });
     });
 
+    describe("when grafting custom Objects",function(){
+      it("grafts custom object properties", function(){
+        var host_object = new Object();
+        host_object.host_date = new Date();
+        
+        var grafted = this.grafter.graft(host_object);
+        var grafted_ctor = this.get_ctor_from_client_context(grafted);
+        var grafted_property_ctor = this.get_ctor_from_client_context(grafted.host_date);
 
+        expect(grafted_ctor).to.equal(this.client_builtin_objects["Object"]);
+        expect(grafted_property_ctor).to.equal(this.client_builtin_objects["Date"]);
+      });
 
-    it("grafts generic objects", function(){
-      var host_object = new Object();
-      host_object.host_date = new Date();
-      
-      var grafted = this.grafter.graft(host_object);
-      var grafted_ctor = this.get_ctor_from_client_context(grafted);
-      var grafted_property_ctor = this.get_ctor_from_client_context(grafted.host_date);
+      it("grafts a custom object's prototype", function(){
+        var host_ctor = function(){};
+        var spy = sinon.spy();
+        host_ctor.prototype = {
+          foo: function(){ spy(); }
+        };
+        var host_object = new host_ctor();
+        
+        var grafted_object = this.grafter.graft(host_object);
+        grafted_object.foo();
 
-      expect(grafted_ctor).to.equal(this.client_builtin_objects["Object"]);
-      expect(grafted_property_ctor).to.equal(this.client_builtin_objects["Date"]);
-    });
+        spy.should.have.been.calledWith();
+      });
+
+    });   
   });
 
   describe("Built-in Types", function(){

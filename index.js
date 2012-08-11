@@ -15,12 +15,19 @@ ObjectGrafter.prototype.graft_builtin_type = function(type){
   return JSON.parse(JSON.stringify(type));
 };
 
-ObjectGrafter.prototype.graft_host_object_properties_to_client_object = function(host_object, client_object, safe_properties){
-  if(typeof(safe_properties) == 'undefined'){
-    safe_properties = [];
+ObjectGrafter.prototype.graft_host_object_properties_to_client_object = function(host_object, client_object, object_safe_properties){
+  if(typeof(object_safe_properties) == 'undefined'){
+    object_safe_properties = [];
   }
+
+  var generic_safe_properties = ['__lookupGetter__','__lookupSetter__',
+                                 '__defineSetter__','__defineGetter__',
+                                 '__proto__','toString'];
+  
   function is_safe_property(property){
-    if(safe_properties.indexOf(property) !== -1){
+    if(object_safe_properties.indexOf(property) !== -1){
+      return true;
+    } else if(generic_safe_properties.indexOf(property) !== -1) {
       return true;
     } else {
       return false;
@@ -129,7 +136,7 @@ ObjectGrafter.prototype.graft_function = function(object){
     
     return self.graft(return_value);
   };
-
+  
   var safe_properties = ['constructor','name','arguments','caller',
                          'callee', 'length'];
 
