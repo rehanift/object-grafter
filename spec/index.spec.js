@@ -267,6 +267,15 @@ describe("An Object Grafter", function(){
         spy.should.have.been.calledWith();
       });
 
+      it("does not get stuck in infinite circular references", function(){
+        var host_ctor = function(){
+          this.foo = this;
+        };
+        var host_object = new host_ctor();
+        var grafted = this.grafter.graft(host_object);
+        expect(grafted.foo).to.equal(undefined);
+      });
+
     });   
   });
 

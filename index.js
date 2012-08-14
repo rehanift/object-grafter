@@ -1,5 +1,5 @@
 var ObjectGrafter = function(){
-
+  this.seen = [];
 };
 
 ObjectGrafter.create = function(){
@@ -14,6 +14,14 @@ ObjectGrafter.prototype.set_host_builtin_objects = function(objects){
 ObjectGrafter.prototype.graft_builtin_type = function(type){
   return JSON.parse(JSON.stringify(type));
 };
+
+ObjectGrafter.prototype.mark_object_as_seen = function(object){
+  this.seen.push(object);
+};
+
+ObjectGrafter.prototype.forget_object_as_seen = function(){
+  this.seen.pop();
+}
 
 ObjectGrafter.prototype.graft_host_object_properties_to_client_object = function(host_object, client_object, object_safe_properties){
   if(typeof(object_safe_properties) == 'undefined'){
@@ -35,6 +43,9 @@ ObjectGrafter.prototype.graft_host_object_properties_to_client_object = function
   }
   
   var self = this;
+
+  self.mark_object_as_seen(host_object);
+
   var properties = Object.getOwnPropertyNames(host_object);
   properties.forEach(function(property){
     if (property == "constructor" || is_safe_property(property)) {
@@ -43,6 +54,8 @@ ObjectGrafter.prototype.graft_host_object_properties_to_client_object = function
       client_object[property] = self.graft(host_object[property]);
     }
   });
+
+  self.forget_object_as_seen();
   
   return client_object;  
 };
@@ -187,7 +200,20 @@ ObjectGrafter.prototype.graft_array_object = function(object){
   return client_object;
 };
 
-ObjectGrafter.prototype.graft = function(o){
+ObjectGrafter.prototype.seen_object_before = function(object){
+  if(this.seen.indexOf(object) !== -1){
+    return true;
+  } else {
+    return false;
+  }
+};
+
+ObjectGrafter.prototype.graft = function(o){  
+  if(this.seen_object_before(o)){
+    // TODO: This should return the already grafted object
+    return undefined;
+  }
+
   if (typeof(o) == "function" || typeof(o) == "object") {
     return this.graft_objects_and_functions(o);
   }
