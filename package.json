@@ -1,0 +1,21 @@
+{
+  "name": "object-grafter",
+  "version": "0.1.0",
+  "description": "Grafts objects from one v8 context to another",
+  "devDependencies": {
+      "mocha": "*",
+      "chai": "*",
+      "sinon": "*",
+      "sinon-chai": "*"
+  },
+  "scripts": {
+    "test": "`npm bin`/mocha spec/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rehanift/object-grafter.git"
+  },
+  "author": "Rehan Iftikhar",
+  "license": "MIT",
+  "main": "source_loader.js"
+}
