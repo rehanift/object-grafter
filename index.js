@@ -231,8 +231,7 @@ ObjectGrafter.prototype.graft = function(o){
   }
 
   if(typeof(o) == "string"){
-    return (new String(o)).toString();
-    //return this.graft_builtin_type(o);
+    return this.graft_builtin_type(o);
   }
 
   if(typeof(o) == "undefined"){
