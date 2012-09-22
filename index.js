@@ -98,6 +98,14 @@ ObjectGrafter.prototype.graft_objects_and_functions = function(object){
   }
 
   /*
+   * Client context objects
+   */
+
+  if (object instanceof Object) {
+    return object;
+  }
+
+  /*
    * Built-in Object instances
    */
 
@@ -196,7 +204,6 @@ ObjectGrafter.prototype.graft_array_object = function(object){
   var client_object = new Array(object.length);
   var safe_properties = ['constructor','length'];
   this.graft_host_object_properties_to_client_object(object, client_object, safe_properties);
-
   return client_object;
 };
 

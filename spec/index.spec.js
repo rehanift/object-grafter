@@ -307,4 +307,33 @@ describe("An Object Grafter", function(){
       expect(grafted).to.eql(undefined);
     });
   });
+
+  describe("Child context objects", function(){
+    var vm = require("vm");
+
+    it("does not graft child arrays", function(){
+      var client_array = vm.runInContext("['foo']", this.client_context);
+      var grafted_client_array = this.grafter.graft(client_array);
+      expect(grafted_client_array).to.equal(client_array);
+    });
+
+    it("does not graft child dates", function(){
+      var client_date = vm.runInContext("new Date();", this.client_context);
+      var grafted_client_date = this.grafter.graft(client_date);
+      expect(grafted_client_date).to.equal(client_date);
+    });
+
+    it("does not graft child regexps", function(){
+      var client_regexp = vm.runInContext("new RegExp(\".*\", 'mgi');", this.client_context);
+      var grafted_client_regexp = this.grafter.graft(client_regexp);
+      expect(grafted_client_regexp).to.equal(client_regexp);
+    });
+
+    it("does not graft child errors", function(){
+      var client_error = vm.runInContext("new Error();", this.client_context);
+      var grafted_client_error = this.grafter.graft(client_error);
+      expect(grafted_client_error).to.equal(client_error);
+    });
+    
+  });
 });
