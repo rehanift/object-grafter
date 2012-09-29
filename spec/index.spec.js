@@ -13,6 +13,14 @@ var load_object_grafter = function(context){
   return vm.runInContext("ObjectGrafter.create()", context);
 };
 
+var load_es6_collections = function(context){
+  var filename = require.resolve("es6-collections");
+  var fs = require("fs");
+  var src = fs.readFileSync(filename);
+  var vm = require("vm");
+  vm.runInContext(src, context);
+};
+
 var make_get_ctor_fn_from_client_context = function(context){
   var vm = require("vm");
   var get_constructor = function(object){
@@ -26,6 +34,7 @@ describe("An Object Grafter", function(){
   beforeEach(function(){
     var vm = require("vm");
     this.client_context = vm.createContext();
+    load_es6_collections(this.client_context);
     this.client_builtin_objects = {
       "Array": vm.runInContext("Array", this.client_context),
       "Date": vm.runInContext("Date", this.client_context),
@@ -273,9 +282,8 @@ describe("An Object Grafter", function(){
         };
         var host_object = new host_ctor();
         var grafted = this.grafter.graft(host_object);
-        expect(grafted.foo).to.equal(undefined);
+        expect(grafted.foo).to.equal(grafted);
       });
-
     });   
   });
 

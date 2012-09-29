@@ -1,7 +1,10 @@
 {
   "name": "object-grafter",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Grafts objects from one v8 context to another",
+  "dependencies": {
+      "es6-collections": "*"
+  },
   "devDependencies": {
       "mocha": "*",
       "chai": "*",

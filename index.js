@@ -1,5 +1,5 @@
 var ObjectGrafter = function(){
-  this.seen = [];
+  this.seen = new WeakMap();
 };
 
 ObjectGrafter.create = function(){
@@ -15,13 +15,9 @@ ObjectGrafter.prototype.graft_builtin_type = function(type){
   return JSON.parse(JSON.stringify(type));
 };
 
-ObjectGrafter.prototype.mark_object_as_seen = function(object){
-  this.seen.push(object);
+ObjectGrafter.prototype.mark_object_as_seen = function(object, value){
+  this.seen.set(object, value);
 };
-
-ObjectGrafter.prototype.forget_object_as_seen = function(){
-  this.seen.pop();
-}
 
 ObjectGrafter.prototype.graft_host_object_properties_to_client_object = function(host_object, client_object, object_safe_properties){
   if(typeof(object_safe_properties) == 'undefined'){
@@ -44,7 +40,7 @@ ObjectGrafter.prototype.graft_host_object_properties_to_client_object = function
   
   var self = this;
 
-  self.mark_object_as_seen(host_object);
+  self.mark_object_as_seen(host_object, client_object);
 
   var properties = Object.getOwnPropertyNames(host_object);
   properties.forEach(function(property){
@@ -55,15 +51,10 @@ ObjectGrafter.prototype.graft_host_object_properties_to_client_object = function
     }
   });
 
-  self.forget_object_as_seen();
-  
   return client_object;  
 };
 
 ObjectGrafter.prototype.graft_objects_and_functions = function(object){
-  if (object == null) {
-    return null;
-  }
 
   /*
    * Built-in Object Constructors
@@ -208,21 +199,27 @@ ObjectGrafter.prototype.graft_array_object = function(object){
 };
 
 ObjectGrafter.prototype.seen_object_before = function(object){
-  if(this.seen.indexOf(object) !== -1){
+  if(this.seen.has(object)){
     return true;
   } else {
     return false;
   }
 };
 
+ObjectGrafter.prototype.get_seen_object = function(object){
+  return this.seen.get(object);
+};
+
 ObjectGrafter.prototype.graft = function(o){  
-  if(this.seen_object_before(o)){
-    // TODO: This should return the already grafted object
-    return undefined;
-  }
 
   if (typeof(o) == "function" || typeof(o) == "object") {
-    return this.graft_objects_and_functions(o);
+    if (o == null) {
+      return null;
+    } else if(this.seen_object_before(o)){
+      return this.get_seen_object(o);
+    } else {
+      return this.graft_objects_and_functions(o);
+    }
   }
 
   /*

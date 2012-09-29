@@ -37,7 +37,6 @@ assert.strictEqual(grafted_date.constructor, vm.runInContext("Date", client_cont
 
 ## Things that don't work yet
 - Function Constructors
-- Circular References (grafted as `undefined`)
 
 ## Attribution
 Heavily inspired by [Bradley Meck's "object wrapper"](http://bit.ly/MZHS6k).
