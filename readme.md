@@ -7,8 +7,14 @@ Utility to safely move Javascript objects from one V8 context to another.
 var loader = require('object-grafter').create();
 var source = loader.load_source();
 
+// WeakMap is required for caching
+var filename = require.resolve("es6-collections");
+var fs = require("fs");
+var weakmap_src = fs.readFileSync(filename);
+
 var vm = require('vm');
 var client_context = vm.createContext();
+vm.runInContext(weakmap_src, client_context);
 vm.runInContext(source, client_context);
 var grafter = vm.runInContext('ObjectGrafter.create()', client_context);
 grafter.set_host_builtin_objects({
